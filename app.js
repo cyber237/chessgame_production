@@ -6,7 +6,7 @@ var bodyParser = require('body-parser');
 var jsonParser = bodyParser.json()
 var GameRound=require('./model/game');
 var mongoose = require('mongoose');
-
+const PORT = process.env.PORT || 5000;
 
 var corsOptions = {
   origin: '*',
@@ -151,7 +151,7 @@ io.on("connection",(socket)=>{
 
 
 
-server.listen(3000,()=>{
-  console.log("Listening on port 3000")
+server.listen(PORT,()=>{
+  console.log(`Listening on port ${PORT}`)
 });
 
