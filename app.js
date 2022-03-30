@@ -9,6 +9,8 @@ var mongoose = require('mongoose');
 
 const NodeCache = require( "node-cache" );
 const myCache = new NodeCache();
+const host = '0.0.0.0';
+const port = process.env.PORT || 3000;
 
 
 var corsOptions = {
@@ -169,7 +171,7 @@ io.on("connection",(socket)=>{
 
 
 
-server.listen(process.env.PORT || 3000,()=>{
-  console.log("Listening on port 3000")
+server.listen(port,host,()=>{
+  console.log(`Listening on port ${port}`)
 });
 
