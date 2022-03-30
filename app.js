@@ -6,7 +6,10 @@ var bodyParser = require('body-parser');
 var jsonParser = bodyParser.json()
 var GameRound=require('./model/game');
 var mongoose = require('mongoose');
-const PORT = process.env.PORT || 5000;
+
+const NodeCache = require( "node-cache" );
+const myCache = new NodeCache();
+
 
 var corsOptions = {
   origin: '*',
@@ -20,13 +23,12 @@ mongoose.connect(url).then((_)=>console.log("Connected to mongodb atlas"));
 
 const app = express()
   , server = require('http').createServer(app)
-  , io = require("socket.io")(server,  {cors: {
-    origin: true}});
+  , io = require("socket.io")(server,  {cors:corsOptions});
 
 app.use(cors());
 app.use(express.static(process.cwd()+"/public/"));
 
-app.get('/', (req,res) => {
+app.get('*', (req,res) => {
   res.sendFile(process.cwd()+"/public/index.html")
 });
 
@@ -85,23 +87,39 @@ io.on("connection",(socket)=>{
     console.log(socket.data.code);
     let round = await GameRound.findOne({code:socket.data.code}).exec();
       
-      if (!round) return console.log("Error updating board");
-      console.log(data);
-      try {
-        round.current_state=data.state;
-        round.messages.push({id:"",content: "Game resetted",datetime: 0,author_id:"system"});
-        
-        round.save();
-        data["player"]=socket.data.username;
-        
-        io.to(socket.data.code).emit("reset",data);
-        
-        io.to(socket.data.code).emit("chatmessage",{"messages":round.messages});
-      } catch (error) {
-        console.log(error);
-        
-      }
+    if (!round) return console.log("Error updating board");
+    console.log(data);
+    try {
+      round.current_state=data.state;
+      round.messages.push({id:"",content: "Game resetted",datetime: 0,author_id:"system"});
       
+      round.save();
+      data["player"]=socket.data.username;
+      myCache.set(`${socket.data.code}-status`,"na");
+      
+      io.to(socket.data.code).emit("reset",data);
+      
+      io.to(socket.data.code).emit("chatmessage",{"messages":round.messages});
+    } catch (error) {
+      console.log(error);
+      
+    }
+      
+
+  });
+
+  socket.on("checkmate",async(data)=>{
+
+    io.to(socket.data.code).emit("checkmate",data);
+
+
+
+  });
+
+  socket.on("stalemate",async(data)=>{
+
+    io.to(socket.data.code).emit("stalemate",data);
+
 
   });
 
@@ -151,7 +169,7 @@ io.on("connection",(socket)=>{
 
 
 
-server.listen(PORT,()=>{
-  console.log(`Listening on port ${PORT}`)
+server.listen(3000,()=>{
+  console.log("Listening on port 3000")
 });
 
